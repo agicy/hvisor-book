@@ -109,6 +109,12 @@ struct device_res {
 };
 ```
 
+* 实现约束
+
+当前实现中，通信跳板的环形队列长度 MAX_REQ 为 32, 并且要求 MAX_REQ 为 2 的幂，以便通过位运算完成取模和回绕。每个 Non Root 虚拟机最多支持 MAX_DEVS 为 8 个 Virtio MMIO 设备（例如 net/console/blk/gpu 的组合，按配置创建）。
+
+在请求语义上，写 QueueNotify 寄存器属于数据面通知请求（need_interrupt 为 1），Hypervisor 不会阻塞等待返回值，而是立即返回虚拟机，由后端设备在完成数据处理后通过中断通知前端驱动；除 QueueNotify 之外的寄存器读写属于控制面请求（need_interrupt 为 0），陷入 Hypervisor 的 CPU 会阻塞等待后端写回 cfg_values/cfg_flags 后再返回虚拟机。
+
 #### 请求提交队列
 
 请求提交队列，用于驱动向设备传递控制面的交互请求。当驱动读写Virtio设备的MMIO内存区域时，由于预先Hypervisor不为这段内存区域进行第二阶段地址映射，因此执行驱动程序的CPU会收到缺页异常，陷入Hypervisor。Hypervisor会将当前CPU编号、缺页异常的地址、地址宽度、要写入的值（如果是读则忽略）、虚拟机ID、是否为写操作等信息组合成名为device_req的结构体，并将其加入到请求提交队列req_list，这时监视请求提交队列的Virtio守护进程就会取出该请求进行处理。
