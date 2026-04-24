@@ -78,7 +78,7 @@
 virtio不同设备的实现，参考：
 
 - [virtio-blk文档](../chap04/subchap03/VirtIO/BlockDevice.md)
-- [virtio-net文档](../chap04/subchap03/VirtIO/NetworkDevice.md)
+- [virtio-net文档](../chap04/subchap03/VirtIO/NetDevice.md)
 - [virtio-console文档](../chap04/subchap03/VirtIO/ConsoleDevice.md)
 
 更多内容请详见：[hvisor-tool-README](https://github.com/syswonder/hvisor-tool?tab=readme-ov-file#readme)
