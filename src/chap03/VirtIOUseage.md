@@ -65,20 +65,22 @@
 - `zone0_ipa`表示zone0访问zonex内存的起始IPA。
 - `zonex_ipa`表示zonex内存区域的起始IPA。
 - `size`表示zonex内存区域的大小。
-- `devices`描述了zone0提供的virtio设备，包括网络设备、控制台设备和块设备。
-- `type`字段指定了设备的类型，包括`net`、`console`和`blk`。
+- `devices`描述了 zone0 提供的 virtio 设备，包括网络设备、控制台设备、块设备和 GPU 设备。
+- `type`字段指定了设备的类型，包括`net`、`console`、`blk`和`gpu`。
 - `addr`字段指定了设备的MMIO起始地址（需要和zonex中的设备树匹配）。
 - `len`字段指定了设备的MMIO长度。
 - `irq`字段指定了设备使用的中断号。
 - `tap`字段指定了虚拟网卡的名称，需要提前在root linux中创建网桥，并将该tap设备添加到网桥中。
 - `mac`字段指定了该虚拟网卡的MAC地址。
 - `img`字段指定了块设备的镜像文件路径。
+- `width`字段指定了 virtio-gpu 的 scanout 宽度（仅 `gpu` 设备需要）。
+- `height`字段指定了 virtio-gpu 的 scanout 高度（仅 `gpu` 设备需要）。
 - `status`字段指定了设备的状态，包括`enable`和`disable`。
 
 virtio不同设备的实现，参考：
 
 - [virtio-blk文档](../chap04/subchap03/VirtIO/BlockDevice.md)
-- [virtio-net文档](../chap04/subchap03/VirtIO/NetworkDevice.md)
+- [virtio-net文档](../chap04/subchap03/VirtIO/NetDevice.md)
 - [virtio-console文档](../chap04/subchap03/VirtIO/ConsoleDevice.md)
 
 更多内容请详见：[hvisor-tool-README](https://github.com/syswonder/hvisor-tool?tab=readme-ov-file#readme)

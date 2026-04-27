@@ -164,6 +164,19 @@ cp "${ROCKCHIP_ANDROID_SDK_DIR}/kernel/arch/arm64/boot/Image" "${TFTP_DIR}/zone1
 cp ramdisk.img "${TFTP_DIR}/zone1-android.ramdisk"
 ```
 
+#### Ramdisk 与两阶段 init 启动机制说明
+
+这里的 `ramdisk.img` 对应 Android 启动早期使用的 initramfs。对于 Android 13, init 进程通常采用两阶段 (Two-Stage Init) 启动流程，其目的在于支持动态分区 (super) 等现代分区方案，并在系统关键分区可用前完成最小化初始化。
+
+1. **第一阶段 init (initramfs / first stage)**：
+   Android 内核启动后先挂载 initramfs, 执行第一阶段 init。该阶段会完成 `/dev`、`/proc`、`/sys` 等基础虚拟文件系统挂载，并加载存储相关驱动，使得 eMMC 上的系统分区可被识别与挂载。
+2. **根文件系统切换 (pivot_root / switch_root)**：
+   当 eMMC 上的关键分区（如 `system`、`vendor` 等）挂载完成后，init 会切换根文件系统，从 initramfs 过渡到真实系统分区。
+3. **第二阶段 init (second stage)**：
+   在真实根文件系统上继续执行 `/system/bin/init`, 解析 `init.rc` 等脚本并拉起 Android 的核心服务，最终进入图形界面。
+
+因此，配置中需要同时满足两点：一是 `hvisor-tool` 的 `modules` 里正确加载 `ramdisk.img`, 二是设备树 `chosen` 节点中用于描述 initrd 地址范围的字段与实际加载地址保持一致（否则内核可能找不到 initramfs 或无法进入两阶段启动流程）。
+
 ### 准备 Device-Tree
 
 你无需手动进行复杂的修改。在 `hvisor` 代码仓库的对应开发板目录（`platform/aarch64/sysoul-x3300/image/dts/`）下，已经提供了一份适配好所有虚拟化和硬件直通节点的设备树源码文件 `zone1-android.dts`。
@@ -342,7 +355,15 @@ nohup ./hvisor virtio start zone1-android-virtio.json &
    ```sh
    wm user-rotation lock 1   # 或者 wm user-rotation lock 3
    ```
-3. **可执行文件路径**：在开发和调试时，如果你需要 push 原生的可执行二进制文件到 Android 中运行，由于权限限制，请将它们放置到 `/data/local/tmp` 路径下，并赋予可执行权限（`chmod +x`）。
+3. **可执行文件路径**：在开发和调试时，如果你需要 push 原生的可执行二进制文件到 Android 中运行，建议放在 `/data/local/tmp` 目录下。该路径通常用于临时调试文件，写权限更稳定，且相比系统分区（例如 `/system`、`/vendor`）更适合放置自定义二进制文件。
+
+   例如，在 Android Shell 中执行：
+   ```sh
+   cd /data/local/tmp
+   chmod +x your_bin
+   ./your_bin
+   ```
+   如果遇到 `Permission denied`, 请优先检查文件是否有可执行权限，以及目标目录是否可写。
 
 等待几十秒的时间，直通了 eMMC、GPU 和 VOP2 显示子系统的 Android 虚拟机将启动其核心服务，随后图形化用户界面会输出显示。至此，Android 虚拟机在 hvisor 上启动成功。
 
