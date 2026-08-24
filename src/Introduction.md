@@ -4,7 +4,7 @@
 	<img src="chap01/img/hvisor-logo.svg"/>
 </div>
 
-<p style="text-align:center;"> v0.5, 2026年4月27日</p>
+<p style="text-align:center;"> v0.6, 2026年8月25日</p>
 
 <br>
 <br>
